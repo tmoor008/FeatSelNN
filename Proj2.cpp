@@ -14,6 +14,7 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
 	ifstream fin;
 	string line;
 	float val;
+	int ck = 1;
     
     fin.open(infile.c_str());
     
@@ -27,10 +28,26 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
 	 	istringstream s(line);
 	 	while(s >> val)
 	 	{
+	 		if (ck == 1)
+	 		{
+	 			ck = 0;
+	 		}
+	 		else
+	 		{
+	 			if (val < min)
+				{
+					min = val;
+				}
+				if (val > max)
+				{
+					max = val;
+				}
+	 		}
 	 		tmp.push_back(val);
 	 	}
  		v.push_back(tmp);
  		tmp.clear();
+ 		ck = 1;
 	 }
 	 
 	 //check that data is imported correctly
@@ -50,10 +67,10 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
     return true;
 }
 
-void normalize(vector<vector<float>> &v, float min, float max)
+void normalize(vector<vector<float>> &v, float &min, float &max)
 {
 	float tmp;
-	
+	/*
 	for (unsigned i = 0; i < v.size(); ++i)
 	{
 		for (unsigned j = 1; j < v.at(i).size(); ++j)
@@ -68,6 +85,7 @@ void normalize(vector<vector<float>> &v, float min, float max)
 			}
 		}
 	}
+	*/
 	
 	//cout << "Min: " << min << endl;
 	//cout << "Max: " << max << endl;
@@ -86,7 +104,7 @@ void normalize(vector<vector<float>> &v, float min, float max)
 	}
 }
 
-void display(vector<unsigned> v)
+void display(vector<unsigned> &v)
 {
 	for (unsigned i = 0; i < v.size(); ++i)
 	{
@@ -99,7 +117,7 @@ void display(vector<unsigned> v)
 	//cout << endl;
 }
 
-bool isInFeatSub(unsigned num, vector<unsigned> featureSub)
+bool isInFeatSub(unsigned &num, vector<unsigned> &featureSub)
 {
 	//cout << "size: " << featureSub.size() << endl;
 	for (unsigned i = 0; i < featureSub.size(); ++i)
@@ -115,7 +133,7 @@ bool isInFeatSub(unsigned num, vector<unsigned> featureSub)
 	return false;
 }
 
-int hlprNN(vector<unsigned> featureSub, vector<vector<float>> v, unsigned indexExcl, bool allFlag)
+int hlprNN(vector<unsigned> &featureSub, vector<vector<float>> &v, unsigned &indexExcl, bool allFlag)
 {
 	float closest, closeInd, sum, dist;
 	sum = 0;
@@ -156,7 +174,7 @@ int hlprNN(vector<unsigned> featureSub, vector<vector<float>> v, unsigned indexE
 	
 }
 
-float nearNeigh(vector<vector<float>> v, vector<unsigned> featureSub, bool allFlag)
+float nearNeigh(vector<vector<float>> &v, vector<unsigned> &featureSub, bool allFlag)
 {
 	//currently for small set V
 	//vector<unsigned> featureSub = {15, 27, 1};
@@ -245,6 +263,9 @@ int main()
 	cout << "Type in the name of the file to test: ";
 	cin >> infile;
 	
+	min = INFINITY;
+	max = -1;
+	
 	bool dataLoaded = loadData(infile, v, min, max);
 	if (dataLoaded == false)
 	{
@@ -262,8 +283,8 @@ int main()
 	cout << "This dataset has " << v.at(0).size() - 1 << " features (not including the class attribute), ";
     cout << "with " << v.size() << " instances." << endl << endl;
     cout << "Please wait while I normalize the data..." << endl;
-    min = v.at(0).at(1);
-    max = v.at(0).at(1);
+    //min = v.at(0).at(1);
+    //max = v.at(0).at(1);
     normalize(v, min, max);
 	cout << "Done!" << endl << endl;
 
