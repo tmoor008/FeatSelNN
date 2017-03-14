@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <cmath> 
+#include <algorithm>
 
 using namespace std;
 
@@ -85,13 +86,17 @@ void normalize(vector<vector<float>> &v, float min, float max)
 	}
 }
 
-void display(vector<float> v)
+void display(vector<unsigned> v)
 {
 	for (unsigned i = 0; i < v.size(); ++i)
 	{
-			cout << v.at(i) << " ";
+			cout << v.at(i);
+			if (i != v.size() - 1)
+			{
+				cout << ",";
+			}
 	}
-	cout << endl;
+	//cout << endl;
 }
 
 bool isInFeatSub(unsigned num, vector<unsigned> featureSub)
@@ -112,9 +117,9 @@ bool isInFeatSub(unsigned num, vector<unsigned> featureSub)
 
 int hlprNN(vector<unsigned> featureSub, vector<vector<float>> v, unsigned indexExcl, bool allFlag)
 {
-	//display(I);
 	float closest, closeInd, sum, dist;
 	sum = 0;
+	closeInd = -1;
 	
 	closest = INFINITY;
 	
@@ -182,13 +187,58 @@ float nearNeigh(vector<vector<float>> v, vector<unsigned> featureSub, bool allFl
 	return accuracy*100;
 }
 
+vector<unsigned> forSel(vector<vector<float>> &v, float &bestAcc)
+{
+	vector<unsigned> tSet;
+	vector<unsigned> fSet;
+	vector<unsigned> cSet;
+	float acc = 0;
+	float currBAcc = 0;
+	
+	for (unsigned i = 1; i < v.at(0).size(); ++i)
+	{
+		for(unsigned j = 1; j < v.at(0).size(); ++j)
+		{
+			int jTmp = j;
+			if (find(tSet.begin(), tSet.end(), jTmp) == tSet.end())
+			{
+				tSet.push_back(j);
+				acc = nearNeigh(v, tSet, false);
+				cout << "Using feature(s) {";
+				display(tSet);
+				cout << "} accuracy is " << acc << "%" << endl;
+				if (acc > bestAcc)
+				{
+					bestAcc = acc;
+					fSet = tSet;
+				}
+				if (acc > currBAcc)
+				{
+					currBAcc = acc;
+					cSet = tSet;
+				}
+				tSet.pop_back();
+			}
+		}
+		cout << endl;
+		cout << "Feature set {";
+		display(cSet);
+		cout << "} was best, accuracy is " << currBAcc << "%" << endl << endl;
+		tSet = cSet;
+		cSet.clear();
+		currBAcc = 0;
+	}
+	
+	return fSet;
+}
+
 int main()
 {
 	string infile;
 	int alg;
 	float min, max, accuracy;
 	vector<vector<float>> v;
-	vector<unsigned> featureSub = {15, 27, 1};
+	vector<unsigned> featureSub;
 	bool allFlag = true;
 	
 	cout << "Welcome to Tia Moore's Feature Selection Algorithm." << endl;
@@ -222,6 +272,7 @@ int main()
 	cout << " using “leaving-one-out” evaluation, I get an accuracy of " << accuracy << "%" << endl << endl;
     
     allFlag = false;
+    
     if (alg == 2)
     {
     	
@@ -232,12 +283,14 @@ int main()
     }
 	else
 	{
-		
+		cout << "Beginning Search..." << endl << endl;
+		featureSub = forSel(v, accuracy);
 	}
 	
-	accuracy = nearNeigh(v, featureSub, allFlag);
-	cout << "Finished search!! The best feature subset is ";
-	cout << ", which has an accuracy of " << accuracy << "%" << endl;
+	//accuracy = nearNeigh(v, featureSub, allFlag);
+	cout << "Finished search!! The best feature subset is {";
+	display(featureSub);
+	cout << "}, which has an accuracy of " << accuracy << "%" << endl;
     
 	return 0;
 }
