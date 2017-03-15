@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cmath> 
 #include <algorithm>
+#include <numeric>
 
 using namespace std;
 
@@ -250,6 +251,76 @@ vector<unsigned> forSel(vector<vector<float>> &v, float &bestAcc)
 	return fSet;
 }
 
+vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
+{
+	unsigned rng = v.at(0).size() - 2;
+	unsigned rng2 = v.at(0).size() - 2;
+	vector<unsigned> tSet (v.at(0).size());
+	vector<unsigned> fSet;
+	vector<unsigned> cSet;
+	vector<unsigned>::iterator it; 
+	unsigned val = 0;
+	float acc = 0;
+	float currBAcc = 0;
+	//unsigned curr = 0;
+	
+	std::iota(tSet.begin(), tSet.end(), 0);
+	tSet.erase(tSet.begin());
+	//display(tSet);
+	
+	//cout << "Starting loop, rng2 is " << rng2 << endl;
+	
+	for (unsigned i = 0; i < rng; ++i)
+	{
+		for (unsigned j = 0; j < rng2; ++j)
+		{
+			//int jTmp = j;
+			//if (find(tSet.begin(), tSet.end(), jTmp) == tSet.end())
+			//{
+				//cout << "find j" << endl;
+			//	int jTmp = j;
+				//it = find(tSet.begin(), tSet.end(), jTmp);
+				//cout << "found j" << endl;
+				//val = tSet.at(j);
+				
+				//cout << "tSet before: " << endl;
+				//display(tSet);
+				val = tSet.at(j);
+				tSet.erase(tSet.begin() + j);
+				//cout << endl << "Eliminated : " << val << endl;
+				//display(tSet);
+				acc = nearNeigh(v, tSet, false);
+				cout << endl << "Using feature(s) {";
+				display(tSet);
+				cout << "} accuracy is " << acc << "%" << endl << endl;
+				if (acc > bestAcc)
+				{
+					bestAcc = acc;
+					fSet = tSet;
+				}
+				if (acc > currBAcc)
+				{
+					currBAcc = acc;
+					cSet = tSet;
+				}
+				tSet.insert(tSet.begin() + j, val);
+			//}
+			
+		}
+		cout << endl;
+		cout << "Feature set {";
+		display(cSet);
+		cout << "} was best, accuracy is " << currBAcc << "%" << endl << endl;
+		tSet = cSet;
+		cSet.clear();
+		currBAcc = 0;
+		//cout << "LOOP" << endl;
+		rng2 = rng2 - 1;
+	}
+	
+	return fSet;
+}
+
 int main()
 {
 	string infile;
@@ -294,13 +365,15 @@ int main()
     
     allFlag = false;
     
-    if (alg == 2)
+    if (alg == 1)
     {
-    	
+    	cout << "Beginning Search..." << endl << endl;
+		featureSub = forSel(v, accuracy);
     }
-    if (alg == 3)
+    else if (alg == 2)
     {
-    	
+    	cout << "Beginning Search..." << endl << endl;
+		featureSub = backSel(v, accuracy);
     }
 	else
 	{
