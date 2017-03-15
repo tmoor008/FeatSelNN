@@ -184,7 +184,7 @@ float nearNeigh(vector<vector<float>> &v, vector<unsigned> &featureSub, bool all
 	//call nearest neighbor classifier on best features found
 	for (unsigned k = 0; k < v.size(); ++k)
 	{
-		classifiedAs = v.at(k).at(0);
+		//classifiedAs = v.at(k).at(0);
 		classifiedAs = hlprNN(featureSub, v, k, allFlag);
 		//cout << "Classified as: " << classifiedAs << endl;
 		int actual = v.at(k).at(0);
@@ -240,6 +240,10 @@ vector<unsigned> forSel(vector<vector<float>> &v, float &bestAcc)
 			}
 		}
 		cout << endl;
+		if (currBAcc < bestAcc)
+		{
+			cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl;
+		}
 		cout << "Feature set {";
 		display(cSet);
 		cout << "} was best, accuracy is " << currBAcc << "%" << endl << endl;
@@ -284,12 +288,12 @@ vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 				cout << "Using feature(s) {";
 				display(tSet);
 				cout << "} accuracy is " << acc << "%" << endl;
-				if (acc >= bestAcc)
+				if (acc > bestAcc)
 				{
 					bestAcc = acc;
 					fSet = tSet;
 				}
-				if (acc >= currBAcc)
+				if (acc > currBAcc)
 				{
 					currBAcc = acc;
 					cSet = tSet;
@@ -300,6 +304,10 @@ vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 		}
 		
 		cout << endl;
+		if (currBAcc < bestAcc)
+		{
+			cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl;
+		}
 		cout << "Feature set {";
 		display(cSet);
 		cout << "} was best, accuracy is " << currBAcc << "%" << endl << endl;
