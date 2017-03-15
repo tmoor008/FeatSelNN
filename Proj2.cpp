@@ -155,12 +155,11 @@ int hlprNN(vector<unsigned> &featureSub, vector<vector<float>> &v, unsigned &ind
 					//cout << "Excl val: " << v.at(indexExcl).at(j) << endl;
 					//cout << "Diff pos, feat val: " << v.at(i).at(j) << endl;
 					sum += pow((v.at(indexExcl).at(j) - v.at(i).at(j)), 2);
-					//cout << "Curr Sum: " << sum << endl;
 				}
 			}
 			dist = sqrt(sum);
-			//cout << "Dist: " << dist << endl;
-			if (dist < closest)
+		//	cout << "Dist: " << dist << endl;
+			if (dist <= closest)
 			{
 				closest = dist;
 				closeInd = i;
@@ -179,12 +178,13 @@ float nearNeigh(vector<vector<float>> &v, vector<unsigned> &featureSub, bool all
 {
 	//currently for small set V
 	//vector<unsigned> featureSub = {15, 27, 1};
-	int classifiedAs, numCorrectPred;
-	numCorrectPred = 0;
+	int classifiedAs = 1;
+	int numCorrectPred = 0;
 	
 	//call nearest neighbor classifier on best features found
 	for (unsigned k = 0; k < v.size(); ++k)
 	{
+		classifiedAs = v.at(k).at(0);
 		classifiedAs = hlprNN(featureSub, v, k, allFlag);
 		//cout << "Classified as: " << classifiedAs << endl;
 		int actual = v.at(k).at(0);
@@ -196,10 +196,10 @@ float nearNeigh(vector<vector<float>> &v, vector<unsigned> &featureSub, bool all
 		}
 		//cout << endl << endl;
 	}
-	/*cout << "Num correctly predicted : " << numCorrectPred << endl;
-	int instances = v.size();
-	cout << "Instances : " << instances << endl;
-	*/
+	//cout << "Num correctly predicted : " << numCorrectPred << endl;
+	//int instances = v.size();
+	//cout << "Instances : " << instances << endl;
+	//*/
 	float accuracy = static_cast<float>(numCorrectPred) / static_cast<float>(v.size());
 	//cout << "Accuracy: " << accuracy*100 << "%"<< endl;
 
@@ -254,7 +254,7 @@ vector<unsigned> forSel(vector<vector<float>> &v, float &bestAcc)
 vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 {
 	unsigned rng = v.at(0).size() - 2;
-	unsigned rng2 = v.at(0).size() - 2;
+	unsigned rng2 = v.at(0).size() - 1;
 	vector<unsigned> tSet (v.at(0).size());
 	vector<unsigned> fSet;
 	vector<unsigned> cSet;
@@ -274,15 +274,6 @@ vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 	{
 		for (unsigned j = 0; j < rng2; ++j)
 		{
-			//int jTmp = j;
-			//if (find(tSet.begin(), tSet.end(), jTmp) == tSet.end())
-			//{
-				//cout << "find j" << endl;
-			//	int jTmp = j;
-				//it = find(tSet.begin(), tSet.end(), jTmp);
-				//cout << "found j" << endl;
-				//val = tSet.at(j);
-				
 				//cout << "tSet before: " << endl;
 				//display(tSet);
 				val = tSet.at(j);
@@ -290,15 +281,15 @@ vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 				//cout << endl << "Eliminated : " << val << endl;
 				//display(tSet);
 				acc = nearNeigh(v, tSet, false);
-				cout << endl << "Using feature(s) {";
+				cout << "Using feature(s) {";
 				display(tSet);
-				cout << "} accuracy is " << acc << "%" << endl << endl;
-				if (acc > bestAcc)
+				cout << "} accuracy is " << acc << "%" << endl;
+				if (acc >= bestAcc)
 				{
 					bestAcc = acc;
 					fSet = tSet;
 				}
-				if (acc > currBAcc)
+				if (acc >= currBAcc)
 				{
 					currBAcc = acc;
 					cSet = tSet;
@@ -307,6 +298,7 @@ vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 			//}
 			
 		}
+		
 		cout << endl;
 		cout << "Feature set {";
 		display(cSet);
@@ -347,7 +339,6 @@ int main()
 	cout << "Type the number of the algorithm you want to run." << endl;
 	cout << "	1) Forward Selection" << endl;
     cout << "	2) Backward Elimination" << endl;
-    cout << "	3) Tia’s Special Algorithm" << endl;
     
     cin >> alg;
 	
