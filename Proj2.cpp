@@ -17,6 +17,7 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
 	float val;
 	int ck = 1;
     
+    //uses filestream to open and read file
     fin.open(infile.c_str());
     
     if (!fin.is_open())
@@ -29,6 +30,7 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
 	 	istringstream s(line);
 	 	while(s >> val)
 	 	{
+	 		//computes min and max values in file for normalization later
 	 		if (ck == 1)
 	 		{
 	 			ck = 0;
@@ -51,18 +53,6 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
  		ck = 1;
 	 }
 	 
-	 //check that data is imported correctly
-	 /*
-	 for (unsigned i = 0; i < v.size(); ++i)
-	 {
-		 for (unsigned j = 0; j < v.at(i).size(); ++j)
-		 {
-		 	cout << v.at(i).at(j) << " ";
-		 }
-		 cout << endl;
-	 }
-	 */
-	 
     fin.close();
     
     return true;
@@ -71,37 +61,16 @@ bool loadData(const string &infile, vector<vector<float>> &v, float &min, float 
 void normalize(vector<vector<float>> &v, float &min, float &max)
 {
 	float tmp;
-	/*
-	for (unsigned i = 0; i < v.size(); ++i)
-	{
-		for (unsigned j = 1; j < v.at(i).size(); ++j)
-		{
-			if (v.at(i).at(j) < min)
-			{
-				min = v.at(i).at(j);
-			}
-			if (v.at(i).at(j) > max)
-			{
-				max = v.at(i).at(j);
-			}
-		}
-	}
-	*/
 	
-	//cout << "Min: " << min << endl;
-	//cout << "Max: " << max << endl;
-	
+	//normalizes by rescaling
 	float denom = max - min;
-	//cout << denom << endl;
 	for (unsigned i = 0; i < v.size(); ++i)
 	{
 		for (unsigned j = 1; j < v.at(i).size(); ++j)
 		{
 			tmp = (v.at(i).at(j) - min) / denom;
 			v.at(i).at(j) = tmp;   
-			//cout << v.at(i).at(j) << " ";
 		}
-		//cout << endl;
 	}
 }
 
@@ -115,19 +84,16 @@ void display(vector<unsigned> &v)
 				cout << ",";
 			}
 	}
-	//cout << endl;
 }
 
 bool isInFeatSub(unsigned &num, vector<unsigned> &featureSub)
 {
-	//cout << "size: " << featureSub.size() << endl;
+	//used to know whether to use the feature when computing sum
+	//during leave-one-out validator 
 	for (unsigned i = 0; i < featureSub.size(); ++i)
 	{
-		//cout << "Checking feature: " << featureSub.at(i) << endl;
-		//cout << "num is : " << num << endl;
 		if (num == featureSub.at(i))
 		{
-			//cout << "found" << endl;
 			return true;
 		}
 	}
@@ -144,7 +110,6 @@ int hlprNN(vector<unsigned> &featureSub, vector<vector<float>> &v, unsigned &ind
 	
 	for(unsigned i = 0; i < v.size(); ++i)
 	{
-		//cout << "LOOP" << endl;
 		if (i != indexExcl)
 		{
 		
@@ -152,56 +117,44 @@ int hlprNN(vector<unsigned> &featureSub, vector<vector<float>> &v, unsigned &ind
 			{
 				if (isInFeatSub(j, featureSub) || allFlag == true)
 				{
-					//cout << "Excl val: " << v.at(indexExcl).at(j) << endl;
-					//cout << "Diff pos, feat val: " << v.at(i).at(j) << endl;
+					//computes sum of each feature in set of each instance
+					//distance away from current leave-one-out
 					sum += pow((v.at(indexExcl).at(j) - v.at(i).at(j)), 2);
 				}
 			}
 			dist = sqrt(sum);
-		//	cout << "Dist: " << dist << endl;
+			//finds distance from current leave-one-out to currently viewed instance
 			if (dist <= closest)
 			{
 				closest = dist;
 				closeInd = i;
-				//cout << "Curr closest: " << closest << endl;
 			}
 			sum = 0;
 		}
 	}
 	
-	//cout << "predicted val : " << v.at(closeInd).at(0) << endl;
-	return v.at(closeInd).at(0);
+	return v.at(closeInd).at(0); //returns closest found instance
 	
 }
 
 float nearNeigh(vector<vector<float>> &v, vector<unsigned> &featureSub, bool allFlag)
 {
-	//currently for small set V
-	//vector<unsigned> featureSub = {15, 27, 1};
 	int classifiedAs = 1;
 	int numCorrectPred = 0;
 	
 	//call nearest neighbor classifier on best features found
 	for (unsigned k = 0; k < v.size(); ++k)
 	{
-		//classifiedAs = v.at(k).at(0);
+		//uses helper to determine classification 
 		classifiedAs = hlprNN(featureSub, v, k, allFlag);
-		//cout << "Classified as: " << classifiedAs << endl;
 		int actual = v.at(k).at(0);
-		//cout << "Actual: " << actual << endl;
-		if (classifiedAs == actual)
+		if (classifiedAs == actual) //if correctly classified
 		{
 			++numCorrectPred;
-			//cout << "Currently predicted right: " << numCorrectPred << endl;
 		}
-		//cout << endl << endl;
 	}
-	//cout << "Num correctly predicted : " << numCorrectPred << endl;
-	//int instances = v.size();
-	//cout << "Instances : " << instances << endl;
-	//*/
+
 	float accuracy = static_cast<float>(numCorrectPred) / static_cast<float>(v.size());
-	//cout << "Accuracy: " << accuracy*100 << "%"<< endl;
 
 	return accuracy*100;
 }
@@ -218,25 +171,28 @@ vector<unsigned> forSel(vector<vector<float>> &v, float &bestAcc)
 	{
 		for(unsigned j = 1; j < v.at(0).size(); ++j)
 		{
+			//if the feature is not already in the set
 			int jTmp = j;
 			if (find(tSet.begin(), tSet.end(), jTmp) == tSet.end())
 			{
+				//adds new feature to the set
 				tSet.push_back(j);
+				//tests its accuracy with new feature
 				acc = nearNeigh(v, tSet, false);
 				cout << "Using feature(s) {";
 				display(tSet);
 				cout << "} accuracy is " << acc << "%" << endl;
-				if (acc > bestAcc)
+				if (acc > bestAcc) //sets new overall best acc if its better
 				{
 					bestAcc = acc;
 					fSet = tSet;
 				}
-				if (acc > currBAcc)
+				if (acc > currBAcc) //sets local maxima found
 				{
 					currBAcc = acc;
 					cSet = tSet;
 				}
-				tSet.pop_back();
+				tSet.pop_back(); //takes off temp added feature
 			}
 		}
 		cout << endl;
@@ -247,12 +203,13 @@ vector<unsigned> forSel(vector<vector<float>> &v, float &bestAcc)
 		cout << "Feature set {";
 		display(cSet);
 		cout << "} was best, accuracy is " << currBAcc << "%" << endl << endl;
+		//resets for next instance
 		tSet = cSet;
 		cSet.clear();
 		currBAcc = 0;
 	}
 	
-	return fSet;
+	return fSet; //returns best found feature set
 }
 
 vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
@@ -266,59 +223,56 @@ vector<unsigned> backSel(vector<vector<float>> &v, float &bestAcc)
 	unsigned val = 0;
 	float acc = 0;
 	float currBAcc = 0;
-	//unsigned curr = 0;
 	
+	//sets tSet initially with features 1-n
 	std::iota(tSet.begin(), tSet.end(), 0);
 	tSet.erase(tSet.begin());
-	//display(tSet);
-	
-	//cout << "Starting loop, rng2 is " << rng2 << endl;
+
 	
 	for (unsigned i = 0; i < rng; ++i)
 	{
 		for (unsigned j = 0; j < rng2; ++j)
 		{
-				//cout << "tSet before: " << endl;
-				//display(tSet);
+				//erases one of the features to test if its
+				//elimination is ideal
 				val = tSet.at(j);
 				tSet.erase(tSet.begin() + j);
-				//cout << endl << "Eliminated : " << val << endl;
-				//display(tSet);
+				
+				//finds acc after removing 1 feature
 				acc = nearNeigh(v, tSet, false);
 				cout << "Using feature(s) {";
 				display(tSet);
 				cout << "} accuracy is " << acc << "%" << endl;
-				if (acc > bestAcc)
+				if (acc > bestAcc) //set best overall accuracy found if its better
 				{
 					bestAcc = acc;
 					fSet = tSet;
 				}
-				if (acc > currBAcc)
+				if (acc > currBAcc) //sets the local maxima found
 				{
 					currBAcc = acc;
 					cSet = tSet;
 				}
-				tSet.insert(tSet.begin() + j, val);
-			//}
+				tSet.insert(tSet.begin() + j, val); //adds the eliminated val back
 			
 		}
 		
 		cout << endl;
-		if (currBAcc < bestAcc)
+		if (currBAcc < bestAcc) //if curr new accuracy goes down
 		{
 			cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl;
 		}
 		cout << "Feature set {";
 		display(cSet);
 		cout << "} was best, accuracy is " << currBAcc << "%" << endl << endl;
+		//resets temp to the currbest set and clears currbest
 		tSet = cSet;
 		cSet.clear();
 		currBAcc = 0;
-		//cout << "LOOP" << endl;
-		rng2 = rng2 - 1;
+		rng2 = rng2 - 1; //range should get smaller each go around
 	}
 	
-	return fSet;
+	return fSet; //returns best found feature set
 }
 
 int main()
@@ -337,6 +291,7 @@ int main()
 	min = INFINITY;
 	max = -1;
 	
+	//loads from the file and finds min,max for normalization
 	bool dataLoaded = loadData(infile, v, min, max);
 	if (dataLoaded == false)
 	{
@@ -353,17 +308,17 @@ int main()
 	cout << "This dataset has " << v.at(0).size() - 1 << " features (not including the class attribute), ";
     cout << "with " << v.size() << " instances." << endl << endl;
     cout << "Please wait while I normalize the data..." << endl;
-    //min = v.at(0).at(1);
-    //max = v.at(0).at(1);
-    //normalize(v, min, max);
+    normalize(v, min, max);
 	cout << "Done!" << endl << endl;
 
+	//calls nearest neighbor using all features for comparison
 	accuracy = nearNeigh(v, featureSub, allFlag);
 	cout << "Running nearest neighbor with all " << v.at(0).size() - 1 << " features,";
 	cout << " using “leaving-one-out” evaluation, I get an accuracy of " << accuracy << "%" << endl << endl;
     
     allFlag = false;
     
+    //determines alg to run and calls it
     if (alg == 1)
     {
     	cout << "Beginning Search..." << endl << endl;
@@ -380,7 +335,6 @@ int main()
 		featureSub = forSel(v, accuracy);
 	}
 	
-	//accuracy = nearNeigh(v, featureSub, allFlag);
 	cout << "Finished search!! The best feature subset is {";
 	display(featureSub);
 	cout << "}, which has an accuracy of " << accuracy << "%" << endl;
