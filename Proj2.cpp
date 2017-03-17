@@ -355,7 +355,7 @@ int main()
     cout << "Please wait while I normalize the data..." << endl;
     //min = v.at(0).at(1);
     //max = v.at(0).at(1);
-    normalize(v, min, max);
+    //normalize(v, min, max);
 	cout << "Done!" << endl << endl;
 
 	accuracy = nearNeigh(v, featureSub, allFlag);
